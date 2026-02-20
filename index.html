@@ -1,867 +1,474 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>프롬프트 엔지니어링 가이드</title>
-    <style>
-        /* Design System & Reset */
-        :root {
-            --bg-body: #ffffff;
-            --bg-sidebar: #f7f7f5;
-            --text-primary: #37352f;
-            --text-secondary: #6b6b6b;
-            --border-color: #e0e0e0;
-            --accent-color: #2eaadc;
-            --code-bg: #2d2d2d;
-            --code-text: #f8f8f2;
-            --example-bg: #f1f1ef;
-            --example-border: #d3d3d3;
-            --font-main: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol";
-            --sidebar-width: 280px;
-        }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>프롬프트 엔지니어링 가이드</title>
+  <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" />
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <style>
+/* ─── CSS Variables ─────────────────────────────────────────── */
+    :root {
+      --bg:          #ffffff;
+      --surface:     #f7f7f5;
+      --surface-2:   #eeeeed;
+      --border:      #e1e1e0;
+      --accent:      #2eaadc;
+      --accent-2:    #ff5c5c;
+      --text:        #1a1a1a;
+      --text-muted:  #6b6b6b;
+      --sidebar-w:   280px;
+      --header-h:    60px;
+      --font-serif: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+      --font-sans:  'Pretendard', -apple-system, sans-serif;
+      --font-mono:  'JetBrains Mono', monospace;
+      --radius:      6px;
+      --transition:  0.2s ease;
+    }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
+    /* ─── Reset & Base ──────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-        body {
-            font-family: var(--font-main);
-            color: var(--text-primary);
-            background-color: var(--bg-body);
-            line-height: 1.6;
-            display: flex;
-            min-height: 100vh;
-        }
+    html { scroll-behavior: smooth; }
 
-        /* Mobile Header */
-        .mobile-header {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 60px;
-            background: var(--bg-body);
-            border-bottom: 1px solid var(--border-color);
-            z-index: 1000;
-            align-items: center;
-            padding: 0 20px;
-            justify-content: space-between;
-        }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-sans);
+      font-size: 15px;
+      line-height: 1.75;
+      min-height: 100vh;
+    }
 
-        .hamburger {
-            cursor: pointer;
-            font-size: 24px;
-            background: none;
-            border: none;
-            color: var(--text-primary);
-        }
+    /* ─── Layout ────────────────────────────────────────────────── */
+    #app-shell {
+      display: grid;
+      grid-template-columns: var(--sidebar-w) 1fr;
+      grid-template-rows: var(--header-h) 1fr;
+      min-height: 100vh;
+    }
 
-        .mobile-title {
-            font-weight: 700;
-            font-size: 1.1rem;
-        }
+    /* ─── Header ────────────────────────────────────────────────── */
+    #site-header {
+      grid-column: 1 / -1;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 0 32px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
 
-        /* Sidebar Navigation */
-        .sidebar {
-            width: var(--sidebar-width);
-            background-color: var(--bg-sidebar);
-            height: 100vh;
-            position: fixed;
-            left: 0;
-            top: 0;
-            overflow-y: auto;
-            border-right: 1px solid var(--border-color);
-            padding: 40px 20px;
-            transition: transform 0.3s ease;
-            z-index: 900;
-        }
+    #site-header .logo-mark {
+      width: 30px;
+      height: 30px;
+      background: var(--accent);
+      clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+      flex-shrink: 0;
+    }
 
-        .sidebar h1 {
-            font-size: 1.2rem;
-            margin-bottom: 30px;
-            font-weight: 800;
-            color: var(--text-primary);
-        }
+    #site-header h1 {
+      font-family: var(--font-serif);
+      font-size: 1rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      color: var(--text);
+    }
 
-        .nav-list {
-            list-style: none;
-        }
+    #site-header h1 span {
+      color: var(--accent);
+    }
 
-        .nav-item {
-            margin-bottom: 8px;
-        }
+    #site-header .version-tag {
+      margin-left: auto;
+      font-family: var(--font-sans);
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+      padding: 2px 10px;
+      border-radius: 20px;
+    }
 
-        .nav-link {
-            text-decoration: none;
-            color: var(--text-secondary);
-            font-size: 0.95rem;
-            display: block;
-            padding: 8px 12px;
-            border-radius: 6px;
-            transition: all 0.2s ease;
-        }
+    /* ─── Sidebar ───────────────────────────────────────────────── */
+    #sidebar {
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      position: sticky;
+      top: var(--header-h);
+      height: calc(100vh - var(--header-h));
+      overflow-y: auto;
+      padding: 24px 0;
+    }
 
-        .nav-link:hover {
-            background-color: rgba(0,0,0,0.05);
-            color: var(--text-primary);
-        }
+    #sidebar::-webkit-scrollbar { width: 4px; }
+    #sidebar::-webkit-scrollbar-track { background: transparent; }
+    #sidebar::-webkit-scrollbar-thumb { background: var(--text-muted); border-radius: 4px; }
 
-        .nav-link.active {
-            background-color: #e6e6e4;
-            color: var(--text-primary);
-            font-weight: 600;
-        }
+    #sidebar .nav-label {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--text-muted);
+      padding: 0 24px 10px;
+    }
 
-        /* Main Content */
-        .main-content {
-            margin-left: var(--sidebar-width);
-            padding: 60px 80px;
-            width: 100%;
-            max-width: 1200px;
-        }
+    #nav-list {
+      list-style: none;
+    }
 
-        section {
-            margin-bottom: 80px;
-            scroll-margin-top: 80px; /* For smooth scroll offset */
-        }
+    #nav-list li a {
+      display: block;
+      padding: 8px 24px;
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 0.82rem;
+      font-family: var(--font-sans);
+      font-weight: 300;
+      border-left: 2px solid transparent;
+      transition: color var(--transition), border-color var(--transition), background var(--transition);
+      line-height: 1.4;
+    }
 
-        h2 {
-            font-size: 1.8rem;
-            margin-bottom: 24px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid var(--border-color);
-            color: var(--text-primary);
-        }
+    #nav-list li a:hover {
+      color: var(--text);
+      background: var(--surface-2);
+    }
 
-        h3 {
-            font-size: 1.3rem;
-            margin: 30px 0 15px 0;
-            color: var(--text-primary);
-        }
+    #nav-list li a.active {
+      color: var(--accent);
+      border-left-color: var(--accent);
+      background: rgba(46, 170, 220, 0.1);
+    }
 
-        p, ul, ol {
-            margin-bottom: 16px;
-            font-size: 1.05rem;
-        }
+    /* ─── Main Content ──────────────────────────────────────────── */
+    #main-content {
+      padding: 48px 64px 96px;
+      max-width: 820px;
+    }
 
-        ul, ol {
-            padding-left: 24px;
-        }
+    /* Loading state */
+    #loading-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      padding: 120px 0;
+      color: var(--text-muted);
+    }
 
-        li {
-            margin-bottom: 8px;
-        }
+    .spinner {
+      width: 32px;
+      height: 32px;
+      border: 2px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
 
-        /* Example Box Styling */
-        .example-box {
-            background-color: var(--example-bg);
-            border-left: 4px solid var(--example-border);
-            padding: 20px;
-            border-radius: 4px;
-            margin: 20px 0;
-            font-size: 0.95rem;
-            white-space: pre-wrap; /* Preserve line breaks in examples */
-        }
+    @keyframes spin { to { transform: rotate(360deg); } }
 
-        .example-label {
-            font-weight: 700;
-            color: #555;
-            margin-bottom: 8px;
-            display: block;
-            text-transform: uppercase;
-            font-size: 0.8rem;
-        }
+    /* ─── Markdown Typography ───────────────────────────────────── */
+    #md-render h1 {
+      font-family: var(--font-serif);
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: var(--text);
+      margin: 0 0 8px;
+      line-height: 1.25;
+    }
 
-        /* Code Block Styling */
-        pre {
-            background-color: var(--code-bg);
-            color: var(--code-text);
-            padding: 20px;
-            border-radius: 8px;
-            overflow-x: auto;
-            margin: 20px 0;
-            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
-            font-size: 0.9rem;
-        }
+    #md-render h2 {
+      font-family: var(--font-serif);
+      font-size: 1.75rem;
+      font-weight: 600;
+      color: var(--accent);
+      margin: 52px 0 16px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border);
+      scroll-margin-top: calc(var(--header-h) + 16px);
+    }
 
-        code {
-            font-family: inherit;
-        }
+    #md-render h3 {
+      font-family: var(--font-serif);
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: var(--text);
+      margin: 28px 0 10px;
+    }
 
-        /* Inline code for highlighting */
-        .inline-code {
-            background-color: rgba(135,131,120,0.15);
-            color: #eb5757;
-            padding: 2px 5px;
-            border-radius: 3px;
-            font-family: monospace;
-            font-size: 0.9em;
-        }
+    #md-render p {
+      margin: 0 0 16px;
+      color: var(--text);
+    }
 
-        /* Overlay for mobile */
-        .overlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.5);
-            z-index: 800;
-        }
+    #md-render ul, #md-render ol {
+      margin: 0 0 16px 20px;
+    }
 
-        /* Responsive Design */
-        @media (max-width: 900px) {
-            :root {
-                --sidebar-width: 0px;
-            }
+    #md-render li {
+      margin-bottom: 6px;
+    }
 
-            .mobile-header {
-                display: flex;
-            }
+    #md-render a {
+      color: var(--accent);
+      text-decoration: none;
+      border-bottom: 1px solid var(--accent);
+      transition: border-color var(--transition);
+    }
 
-            .sidebar {
-                transform: translateX(-100%);
-                width: 260px;
-                padding-top: 80px;
-            }
+    #md-render a:hover {
+      border-bottom-color: var(--text);
+      color: var(--text);
+    }
 
-            .sidebar.active {
-                transform: translateX(0);
-            }
+    #md-render strong { color: var(--text); font-weight: 600; }
+    #md-render em { color: var(--text-muted); font-style: italic; }
 
-            .main-content {
-                margin-left: 0;
-                padding: 80px 20px 40px 20px;
-            }
+    /* ─── Code ──────────────────────────────────────────────────── */
+    #md-render code {
+    font-family: var(--font-sans); /* Pretendard 적용 */
+    font-weight: 600;
+    font-size: 0.88em;
+    color: #cf222e;                /* 가독성이 높은 짙은 레드 */
+    background-color: #f6f8fa;     /* 더 깔끔한 연회색 배경 */
+    padding: 2px 5px;
+    border-radius: 4px;
+    border: 1px solid rgba(27, 31, 36, 0.1);
+    white-space: break-spaces;
+    }
 
-            .overlay.active {
-                display: block;
-            }
-        }
-    </style>
+    #md-render pre {
+      background: #2d2d2d;
+      color: #f8f8f2;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px 24px;
+      overflow-x: auto;
+      margin: 0 0 20px;
+      position: relative;
+    }
+
+    #md-render pre code {
+      background: none;
+      border: none;
+      padding: 0;
+      color: inherit;
+      font-size: 0.85em;
+      line-height: 1.6;
+    }
+
+    /* ─── Blockquote → Example Box Override ────────────────────── */
+    #md-render blockquote {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--accent);
+      border-radius: var(--radius);
+      padding: 16px 20px;
+      margin: 0 0 20px;
+      position: relative;
+    }
+
+    #md-render blockquote::before {
+      content: 'EXAMPLE';
+      display: block;
+      font-family: var(--font-sans);
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      color: var(--accent);
+      margin-bottom: 8px;
+    }
+
+    #md-render blockquote p {
+      margin: 0;
+      color: var(--text);
+      font-size: 0.9rem;
+    }
+
+    #md-render blockquote code {
+      background: rgba(0, 0, 0, 0.05);
+      border-color: rgba(0, 0, 0, 0.1);
+    }
+
+    /* ─── Table ─────────────────────────────────────────────────── */
+    #md-render table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 0 0 20px;
+      font-size: 0.88rem;
+    }
+
+    #md-render th {
+      background: var(--surface-2);
+      color: var(--accent);
+      font-family: var(--font-sans);
+      font-size: 0.90rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-align: left;
+      padding: 10px 16px;
+      border: 1px solid var(--border);
+    }
+
+    #md-render td {
+      padding: 10px 16px;
+      border: 1px solid var(--border);
+      color: var(--text);
+    }
+
+    #md-render tr:hover td {
+      background: rgba(0, 0, 0, 0.03);
+    }
+
+    /* ─── HR ─────────────────────────────────────────────────────── */
+    #md-render hr {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 40px 0;
+    }
+
+    /* ─── Fade-in animation ─────────────────────────────────────── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    #md-render {
+      animation: fadeUp 0.4s ease forwards;
+    }
+
+    /* ─── Responsive ─────────────────────────────────────────────── */
+    @media (max-width: 768px) {
+      #app-shell {
+        grid-template-columns: 1fr;
+        grid-template-rows: var(--header-h) auto 1fr;
+      }
+
+      #sidebar {
+        position: static;
+        height: auto;
+        border-right: none;
+        border-bottom: 1px solid var(--border);
+        padding: 16px 0;
+      }
+
+      #main-content {
+        padding: 28px 24px 64px;
+      }
+    }
+  </style>
 </head>
 <body>
 
-    <header class="mobile-header">
-        <span class="mobile-title">Prompt Guide</span>
-        <button class="hamburger" id="hamburger-btn">☰</button>
-    </header>
+<div id="app-shell">
 
-    <div class="overlay" id="overlay"></div>
+  <!-- Header -->
+  <header id="site-header">
+    <div class="logo-mark" aria-hidden="true"></div>
+    <h1>프롬프트 엔지니어링 <span>가이드</span></h1>
+    <span class="version-tag">v1.0</span>
+  </header>
 
-    <nav class="sidebar" id="sidebar">
-        <h1>Prompt Guide</h1>
-        <ul class="nav-list" id="nav-list">
-            <li class="nav-item"><a href="#chapter-1" class="nav-link">1. 프롬프트의 3가지 유형</a></li>
-            <li class="nav-item"><a href="#chapter-2" class="nav-link">2. 제로샷, 원샷, 퓨샷</a></li>
-            <li class="nav-item"><a href="#chapter-3" class="nav-link">3. 페르소나 패턴</a></li>
-            <li class="nav-item"><a href="#chapter-4" class="nav-link">4. 마크다운 작성법</a></li>
-            <li class="nav-item"><a href="#chapter-5" class="nav-link">5. 표현 강도와 중요도</a></li>
-            <li class="nav-item"><a href="#chapter-6" class="nav-link">6. 톤(말투) 지정</a></li>
-            <li class="nav-item"><a href="#chapter-7" class="nav-link">7. 대안 접근법 패턴</a></li>
-            <li class="nav-item"><a href="#chapter-8" class="nav-link">8. 이용자 페르소나 패턴</a></li>
-            <li class="nav-item"><a href="#chapter-9" class="nav-link">9. 레시피 패턴</a></li>
-            <li class="nav-item"><a href="#chapter-10" class="nav-link">10. 뒤집힌 상호작용 패턴</a></li>
-            <li class="nav-item"><a href="#chapter-11" class="nav-link">11. 인지 검증자 패턴</a></li>
-        </ul>
-    </nav>
+  <!-- Sidebar -->
+  <nav id="sidebar" aria-label="섹션 내비게이션">
+    <p class="nav-label">목차</p>
+    <ul id="nav-list">
+      <!-- Dynamically populated by JS -->
+    </ul>
+  </nav>
 
-    <main class="main-content">
+  <!-- Main -->
+  <main id="main-content">
+    <div id="loading-state">
+      <div class="spinner"></div>
+      <span>콘텐츠 로딩 중…</span>
+    </div>
+    <div id="md-render" style="display:none;"></div>
+  </main>
 
-        <section id="chapter-1">
-            <h2>1. 프롬프트의 3가지 유형</h2>
-            
-            <h3>서술형</h3>
-            <p>: 맥락과 배경을 설명하여 AI가 상황을 이해하도록 유도</p>
-            <p>: 재사용 낮음, 유연성 높음(다양한 해석)</p>
-            <div class="example-box">
-                <span class="example-label">EXAMPLE</span>
-당신은 10년 경력의 무역 전문가입니다. 
-중소기업 수출 담당자가 HS code 를 처음 배우는 상황입니다. 
-이 사람에게 HS code 의 개념과 중요성을 설명해주세요.
-            </div>
+</div>
 
-            <h3>지침형</h3>
-            <p>: 단계별 절차나 명확한 규칙을 제시하여 원하는 출력을 유도</p>
-            <p>: 재사용 중간, 유연성 중간</p>
-            <div class="example-box">
-                <span class="example-label">EXAMPLE</span>
-다음 규칙에 따라 python 코드를 작성하세요.
-함수명은 snake_case로 작성
-각 함수의 docstring (주석)
-예외 처리 반드시 포함 (맞으면 try, 아니면 except)
-결과는 json 형식으로 반환
-            </div>
+<script>
+(async () => {
+  /* ── 1. Custom Renderer: h2에 id 자동 주입 ────────────────── */
+  const renderer = new marked.Renderer();
 
-            <h3>함수형</h3>
-            <p>: 입력값과 출력값을 명확히 정의하여 일관된 결과를 생성 (구조로 입력)</p>
-            <p>: 재사용 높음, 유연성 낮음(전문성 강화, 토큰수 사용 ↓)</p>
-            <div class="example-box">
-                <span class="example-label">EXAMPLE</span>
-입력 : {product_name}, {hs_code}, {country}
-처리 : 해당 국가의 관세율 및 수입 규제 조회
-출력 : {
-    “관세율” : “”,
-    “규제사항” : [ ],
-    “필요서류” : [ ]
-}
-            </div>
-        </section>
-
-        <section id="chapter-2">
-            <h2>2. 제로샷, 원샷, 퓨샷</h2>
-
-            <h3>제로샷</h3>
-            <p>: 샘플 예시 없이 바로 지시하는 방식</p>
-            <div class="example-box">
-                <span class="example-label">EXAMPLE</span>
-이 제품 정말 맘에들어. 강아지에 대해서 설명해 주세요.
-            </div>
-
-            <h3>원샷</h3>
-            <p>: 샘플 예시를 1개 제공하는 방식</p>
-            <div class="example-box">
-                <span class="example-label">EXAMPLE</span>
-감정을 분류해 주세요. 
-
-예시)
-“배송이 너무 늦어서 실망했어요” - 감정: 부정
-“이 제품 정말 맘에 들어요” - 감정: 
-            </div>
-
-            <h3>퓨샷</h3>
-            <p>: 샘플 예시 2개 이상</p>
-            <div class="example-box">
-                <span class="example-label">EXAMPLE 1 (감정 분류)</span>
-감정을 분류해 주세요(긍정/부정/중립)
-
-예시)
-텍스트: “배송이 너무 늦어서 실망이야” -> 부정
-텍스트: “그냥 평범한 제품이야” -> 중립
-텍스트: “역대급 만족이야” -> 긍정
-텍스트: “품질은 좋은데 가격이 비싸요” -> 중립
-
-텍스트: “이 제품 정말 마음에 들어”
-감정: 
-            </div>
-            <div class="example-box">
-                <span class="example-label">EXAMPLE 2 (HS code 분류)</span>
-HS code 를 분류해 주세요
-
-예시)
-품목: “면으로 만든 남성용 티셔츠” -> 6109.10
-품목: “폴리에스테르 소재 여성 블라우스” -> 6206.40
-품목: “아동용 데님 바지” -> 6203.42
-
-품목: “울 혼방 남성 재킷”
-HS code: 
-            </div>
-        </section>
-
-        <section id="chapter-3">
-            <h2>3. 페르소나 패턴</h2>
-            <p>"이 계약서 검토해줘"</p>
-            <ul>
-                <li>(상황1) 페르소나 없음 : 일반적인 설명</li>
-                <li>(상황2) 변호사 : 법적 리스크 중심 분석</li>
-                <li>(상황3) CFO : 재무조건 수익성 관련 분석</li>
-                <li>(상황4) 신입사원 : 쉽고 친절한 설명</li>
-            </ul>
-
-            <h3>페르소나 4가지 구성 요소</h3>
-            <p>1. 당신은 [역할] 입니다<br>
-            2. [경력/배경] 을 가지고 있으며<br>
-            3. [전문분야] 에 특화되어 있습니다<br>
-            4. [말투/태도] 로 응답하세요</p>
-
-            <div class="example-box">
-                <span class="example-label">EXAMPLE (관세사 페르소나)</span>
-“당신은 20년 경력의 관세사 입니다. 
-FTA 협정세율과 원산지 규정 전문가로 
-중소기업 무역 담당자에게 복잡한 내용을 쉽고,
-실용적으로 설명하는 것이 특기입니다.”
-            </div>
-
-            <div class="example-box">
-                <span class="example-label">EXAMPLE (비평가 페르소나)</span>
-“당신은 까다로운 개발자입니다.
-코드 리뷰 시 성능, 보안, 가독성을 엄격하게 평가하며
-칭찬보다 개선점을 먼저 지적하는 스타일 입니다.”
-            </div>
-
-            <h3>멀티 페르소나</h3>
-            <p>: 여러명의 역할 부여</p>
-            <div class="example-box">
-                <span class="example-label">EXAMPLE</span>
-다음 3명의 전문가 입장에서 우리 제품의 동남아 수출 전략을 분석해 주세요.
-
-- 김부장(영업 15년, 낙관적, 현장중심)
-- 이박사(시장조사 전문, 데이터 중심, 신중함)
-- 박대표(스타트업 창업가, 속도 중시, 리스크 감수)
-
-각자의 관점에서 찬반 의견을 제시하세요.
-            </div>
-        </section>
-
-        <section id="chapter-4">
-            <h2>4. 마크다운을 이용한 읽기 쉽고 명료한 프롬프트 작성법</h2>
-            <p>: AI 는 텍스트를 구조적으로 파싱(문맥상 텍스트를 쪼갠다)<br>
-            : 마크다운을 이용하면 역할, 조건, 출력형태가 명확히 구분되어 더 정확하고 일관된 응답을 준다</p>
-
-            <h3>마크다운 핵심요소 6가지</h3>
-            
-            <p><strong>1. #헤더</strong></p> 
-            <p>: 프롬프트의 뼈대 (like h1 큰제목)</p>
-            <div class="example-box">
-                <span class="example-label">EXAMPLE</span>
-#역할
-    당신은 10년 경력의 관세사 입니다.
-#작업
-    HS code 를 분류하세요
-#출력형식
-    JSON 으로 반환
-            </div>
-
-            <p><strong>2. “” “””  코드 블럭</strong></p> 
-            <p>: 입력 데이터 격리<br>
-            : AI가 지시문과 데이터를 혼동하지 않도록 입력을 분리</p>
-            <div class="example-box">
-                <span class="example-label">EXAMPLE</span>
-아래 python 코드의 버그를 찾아주세요
-
-      “””
-    def calculator_tax(price) : 
-        return price*0.1
-        print(“완료”) #버그위치
-     “””
-            </div>
-
-            <p><strong>3. &gt; 인용문</strong></p> 
-            <p>: 핵심강조<br>
-            : 절대 지켜야할 조건이나 중요한 맥락을 부각</p>
-            <div class="example-box">
-                <span class="example-label">EXAMPLE</span>
-    > 반드시 한국어로만 답변하세요
-    > 추측성 내용은 포함하지 마세요
-            </div>
-
-            <p><strong>4. - 목록</strong></p>
-            <p>: 조건과 제약 나열</p>
-            <div class="example-box">
-                <span class="example-label">EXAMPLE</span>
-##제약조건
-    답변은 500자 이내
-    전문 용어 사용시 괄호 안에 설명추가
-    불확실한 내용은 “확인 필요” 로 표시
-    예시는 반드시 무역 도메인에서 선택
-            </div>
-
-            <p><strong>5. |  표</strong></p>
-            <p>: 입출력의 예시 구조</p>
-            <div class="example-box">
-                <span class="example-label">EXAMPLE</span>
-##예시
-    | 입력 품목 | hs code | 관세율 |
-    | 면 티셔츠 | 6109.10 | 13% |
-    | 블라우스  | 6109.10 | 13% |
-    | 데님바지  | 6109.10 | 13% |
-            </div>
-
-            <p><strong>6. **굵게** / *기울임*</strong></p> 
-            <p>: 변수와 강조</p>
-            <div class="example-box">
-                <span class="example-label">EXAMPLE</span>
-**[분석대상]** 에 대해 *반드시* 아래 순서대로 분석하세요
-            </div>
-
-            <h3>마크다운 핵심요소 6가지 다 써보기</h3>
-            <p>: 프롬프트에 [역할, 작업, 입력, 제약, 출력] 내용이 모두 들어가야한다</p>
-            <pre><code>#역할
-    당신은 중소기업 수출 컨설턴트 입니다.
-    FTA 활용과 원산지 증명 전문가 입니다.
-
-#작업
-    아래 수출 품목에 대한 FTA 적용 가능 여부를 분석하세요
-    “””
-    품목명 : 스테인리스 주방용품
-    수출국 : 한국
-    수입국 : 베트남
-    “””
-
-#분석기준
-    - 한-아세안 FTA협정세율 적용여부
-    - 원산지 결정 기준 충족 여부
-    - 필요서류 목록
-
-#제약조건
-    > 확실하지 않은 세율은 반드시 “세관 확인 필요” 로 표기
-    
-#출력
-    “”” JSON
-    {
-    “FTA_적용” : TRUE/FALSE,
-    “협정세율” : “”,
-    “일반세율” : “”,
-    “필요서류” : [ ]
+  renderer.heading = function ({ tokens, depth }) {
+    const text = tokens.map(t => t.raw ?? t.text ?? '').join('');
+    if (depth === 2) {
+      const id = text
+        .trim()
+        .toLowerCase()
+        .replace(/[^\w\sㄱ-힣]/g, '')
+        .replace(/\s+/g, '-');
+      return `<h2 id="${id}">${text}</h2>\n`;
     }
-    “””</code></pre>
-        </section>
+    return `<h${depth}>${text}</h${depth}>\n`;
+  };
 
-        <section id="chapter-5">
-            <h2>5. 글의 표현 강도와 중요도를 조절하는 방법</h2>
-            <p>: 약(참고하세요, 검토하세요, 설명하세요) <br>
-            —-> 강(활용하세요, 반드시 포함하세요, 절대 빠트리지 마세요, 심층 분석하세요, 단계별로 명확히 서술하세요)</p>
+  marked.use({ renderer });
 
-            <div class="example-box">
-                <span class="example-label">EXAMPLE</span>
-약(보안에 신경써주세요)
-    —> 강(~~ 취약점을 반드시 점검하고 발견시 즉시 수정 방안을 제시하세요)
-            </div>
+  /* ── 2. content.md fetch & parse ─────────────────────────── */
+  const loading = document.getElementById('loading-state');
+  const render  = document.getElementById('md-render');
+  const navList = document.getElementById('nav-list');
 
-            <h3>##강도 단계별 표현</h3>
-            <ul>
-                <li>1단계(권장) : 가능하면, 되도록, ~하는 편이 좋습니다.</li>
-                <li>2단계(일반) : ~하세요, ~해주세요</li>
-                <li>3단계(강조) : 반드시, 꼭, 항상</li>
-                <li>4단계(절대) : 절대로, 어떤 경우에도, 예외없이</li>
-            </ul>
-            <div class="example-box">
-                <span class="example-label">EXAMPLE</span>
-1단계 : 가능하면 한국어로 답변해 주세요 
-2단계 : 반드시 한국어로 답변해 주세요
-3단계 : 어떤 경우에도 영어를 사용하지 마세요
-            </div>
+  try {
+    const res = await fetch('content.md');
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const md = await res.text();
 
-            <h3>##우선순위</h3>
-            <ul>
-                <li><strong>🔴최우선(절대조건)</strong><br>
-                개인정보 절대 출력하지 않는다<br>
-                사실과 다른 내용을 생성하지 않는다</li>
-                <li><strong>🟡중요(일반조건)</strong><br>
-                답변은 500자 이내로 작성<br>
-                전문 용어 괄호 설명 추가</li>
-                <li><strong>🔵선택(권장조건)</strong><br>
-                가능하면 실제 사례를 포함<br>
-                표나 목록을 활용하면 더 좋다</li>
-            </ul>
-        </section>
+    render.innerHTML = marked.parse(md);
+    loading.style.display = 'none';
+    render.style.display  = 'block';
 
-        <section id="chapter-6">
-            <h2>6. 톤(말투)를 지정하면 전혀 다른 응답이 생성된다</h2>
-            <pre><code>#입력
-[원본] = 올해 들어 회사는 큰 변화를 맞이했습니다. 이제 새로운 전략과 목표를 설정하고, 모든 직원이 함께 나아가려고 합니다.
+    /* ── 3. Sidebar 동적 생성 ───────────────────────────────── */
+    const headings = render.querySelectorAll('h2[id]');
+    navList.innerHTML = '';
 
-#처리
-다음 각각의 톤에 맞춰 [원본] 글을 수정해 주세요.
-유머러스한
-감정적인
-따뜻한
-아이러니한
-비판적인</code></pre>
+    headings.forEach(h => {
+      const li = document.createElement('li');
+      const a  = document.createElement('a');
+      a.href        = `#${h.id}`;
+      a.textContent = h.textContent;
+      li.appendChild(a);
+      navList.appendChild(li);
+    });
 
-            <p>__________________</p>
+    /* ── 4. Scrollspy ───────────────────────────────────────── */
+    const navLinks = navList.querySelectorAll('a');
 
-            <h3>#보고서 작성 지시</h3>
-            <p><strong>##요약 섹션</strong><br>
-            임원 보고용: 3줄 이내, 숫자 중심, 공식적 톤</p>
-            <p><strong>##본문 섹션</strong><br>
-            실무자용 : 단계별 설명, 기술적이고 구체적 톤</p>
-            <p><strong>##결론 섹션</strong><br>
-            전체 독자용 : 행동유도, 긍정적이고 적극적인 톤</p>
-        </section>
-
-        <section id="chapter-7">
-            <h2>7. 대안 접근법 패턴 : 모든 대안과 해결책 찾아보기</h2>
-            <p>- 일반 프롬프트 -> 어떻게 하면 좋을까? -> AI가 임의로 하나 선택<br>
-            - 대안 패턴 -> 모든 방법을 나열하고 각각의 장단점을 비교해줘 -> 선택권이 사람에게 돌아옴</p>
-
-            <div class="example-box">
-                <span class="example-label">EXAMPLE</span>
-ex. 일반 프롬프트 -> python 을 엑셀 파일을 읽고 싶어 -> AI답변: openpyxl 을 사용하세요
-
-ex. 대안 패턴 -> 방법 1. pandas
-                          방법 2. openpyxl
-                          방법 3. xlrd
-                          방법 4. CSV 로 변환
-            </div>
-
-            <h3>패턴 유형 1번 : 단순 나열형</h3>
-            <pre><code>#지시
-    아래 문제를 해결하는 방법을 최소 4가지를 제시하세요
-    각 방법은 아래 형식으로 작성하세요
-
-##방법  {번호}:{이름}
-    핵심원리: {한줄}
-    적합한 상황 : {언제 쓰면 좋은가}
-    단점 : {주의 할 점}
-    난이도 : {초급/중급/고급}
-
-#문제
-    수출통관 서류 자동으로 생성하고 싶습니다.</code></pre>
-
-            <h3>패턴 유형 2번 : 축 기반 비교형</h3>
-            <pre><code>#지시
-    아래 4가지 방법을 다른 기준으로 비교 분석하세요
-
-#평가 기준 : 
-    개발 속도(빠름/보통/느림)
-    유지 보수 난이도(쉬움/보통/어려움)
-    비용(무료/저비용/고비용)
-    확장성(높음/보통/낮음)
-
-#비교대상 : FAST API , DJANGO, FLASK, NODE.JS, EXPRESS
-#용도 : 무역 데이터 처리 Rest API 서버</code></pre>
-
-            <h3>패턴 유형 3번 : 상황별 분기형</h3>
-            <pre><code>#지시
-    아래 상황별 가장 적합한 데이터 베이스를 추천하세요.
-
-#각 상황은 독립적으로 판단하세요.
-    상황 A : 스타트업, 개발자 1명, 빠른 MVP(개발기간)
-    상황 B : 무역 데이터 10년치, 복잡한 통계 쿼리
-    상황 C : 실시간 환율, 가격 데이터, 초당 1000건 업데이트 
-    상황 D : 문서 형태의 비정형 통관 데이터 저장
-
-#각 상황에 대해 : 
-    1순위 추천 : {DB명} - {이유 한 줄 설명}
-    2순위 추천 : {DB명} - {이유 한 줄 설명}</code></pre>
-
-            <h3>패턴 유형 4번 : 역발상 대안형</h3>
-            <div class="example-box">
-                <span class="example-label">EXAMPLE</span>
-아래 [문제]에 대해 일반적인 해결책뿐 아니라
-"하지 않는 선택지" 와 "문제 자체를 재정의" 하는 방법도 대안으로 포함하여
-총 5가지를 제시하시오
-
-[문제] = 수입 통관 처리 시간이 너무 오래 걸린다
-            </div>
-        </section>
-
-        <section id="chapter-8">
-            <h2>8. 이용자 페르소나 패턴 : 대상에 특화된 맞춤형 답변 유도하기</h2>
-            <p>- 일반 페르소나 패턴 -> AI 의 역할 정의<br>
-            - 이용자 페르소나 패턴 -> 이 답을 듣는 사람은 ~~~입니다.</p>
-
-            <div class="example-box">
-                <span class="example-label">EXAMPLE 1 (일반 페르소나 패턴)</span>
-질문 : “블록체인” 이 무역금융에 어떻게 활용되나요?
-
-이용자1 : 무역을 처음 배우는 대학생
-이용자2 : 중소기업 수출 담당 팀장
-이용자3 : 금융기관 IT 의사결정자
-            </div>
-
-            <div class="example-box">
-                <span class="example-label">EXAMPLE 2 (이용자 페르소나 패턴)</span>
-#이용자 정보
-    직책 : 중소기업 대표(제조업, 직원 30명)
-    수출경험 : 국내 영업만 10년, 해외수출 처음
-    관심사 : 리스크 최소화, 빠른 실행
-    우려 사항 : “복잡하고 어려울 것 같다” 는 막연한 두려움
-    시간 : 바빠서 긴 글을 읽지 않음
-
-#지시
-    위의 이용자에게 첫 수출 준비 3단계 설명하세요.
-    전문 용어는 최소화 하고, 각 단계는 3줄 이내로 작성하세요.
-            </div>
-
-            <h3>이용자 페르소나 설계 체크리스트</h3>
-            <ul>
-                <li>▷ 이 사람의 직업과 역할은?</li>
-                <li>▷ 이 주제에 대한 사전 지식은 어느정도인가?</li>
-                <li>▷ 이 정보로 무엇을 결정하거나 실행할 예정인가?</li>
-                <li>▷ 지금 어떤 상태인가? (급함/여유)</li>
-                <li>▷ 얼마나 긴 답변을 읽을 여유가 있는가?</li>
-                <li>▷ 가장 두려워 하는 것은? 가장 원하는 것은?</li>
-                <li>▷ 절대 쓰면 안되는 언어나 표현이 있나?</li>
-            </ul>
-        </section>
-
-        <section id="chapter-9">
-            <h2>9. 레시피 패턴 : 목표 달성을 위한 작업 단계 받기</h2>
-            <p>: 구체적인 순서를요구할때 <br>
-            - 일반 질문 : 수출 자동화 어떻게 해?  -> 개념설명, 두리뭉실한 방향<br>
-            - 레시피 패턴 : 수출 자동화를 위한 단계별 절차를 주세요  -> 순서있는 행동 지침</p>
-
-            <h3>기본 단계</h3>
-            <pre><code>#목표
-    python 초보자가 무역 hs code 자동 분류 프로그램 만들기
-
-#현재상태
-    python 설치만 되어 있음
-    프로그램 경험 없음
-    엑셀로 품목 데이터 500개 보유
-
-#요청
-    위의 목표를 달성하기 위한 단계별 레시피를 작성하세요.
-    각 단계는 아래 형식으로 작성하세요
-
-##STEP {번호}:{단계명}
-    할 일 : {구체적 행동}
-    소요 시간 : {예상 기간}
-    완료 기준 : {이것이 되면 다음으로}
-    주의사항 : {흔한 실수}</code></pre>
-
-            <div class="example-box">
-                <span class="example-label">EXAMPLE</span>
-무역 계약 클레임 처리 절차를 단계별로 작성하세요
-단, 각 단계에서 발생할 수 있는 분기 상황도 포함하세요
-
-형식:
-step  N. (행동)
-정상 : {이 결과면 다음 단계로}
-이상 : {이 결과면 어떻게 대응}
-            </div>
-
-            <div class="example-box">
-                <span class="example-label">EXAMPLE</span>
-신규 수출 거래처와의 첫 계약 체결을 위한 실행 체크리스트 작성하세요
-
-형식:
-[ ] {형식} - {이유 또는 주의사항} 
-            </div>
-
-            <h3>***병렬 레시피***</h3>
-            <p>: 다음에 무엇을 해야 할지 고민하는 시간을 줄인다</p>
-            <pre><code>1일         2일          3일
-ㅁㅁㅁ      ㅁㅁㅁ       ㅁㅁㅁ</code></pre>
-        </section>
-
-        <section id="chapter-10">
-            <h2>10. 뒤집힌 상호작용 패턴 : AI가 묻고 사용자가 답한다</h2>
-            
-            <h3>#방법 1 : 질문 먼저, 답은 나중</h3>
-            <p>제가 원하는 결과물은 {목표} 입니다.<br>
-            바로 만들지 말고, 먼저 필요한 정보를 질문해 주세요.<br>
-            모든 정보가 수집된 후 결과물을 작성하세요.</p>
-
-            <h3>#방법 2 : 한 번에 하나씩</h3>
-            <p>제가 원하는 결과물은 {목표} 입니다.<br>
-            한 번에 하나의 질문만 하세요.<br>
-            제가 답하면 다음 질문으로 넘어가고, 충분한 정보가 모이면 결과물을 작성하세요</p>
-
-            <div class="example-box">
-                <span class="example-label">EXAMPLE 1</span>
-수출 제안서를 작성해 주세요
-바로 작성하지 말고, 먼저 아래 항목들을 질문해서
-제 답변을 모두 수집한 후 작성하세요
-
-수집이 필요한 정보 : 
-    - 제품정보
-    - 타겟 바이어
-    - 핵심 강점
-    - 가격 정책
-    - 납기 조건 
-            </div>
-
-            <div class="example-box">
-                <span class="example-label">EXAMPLE 2</span>
-저는 python 학습 계획서를 만들어 주세요
-단, 한 번에 하나의 질문만 하고
-제 답변을 들은 뒤 다음 질문으로 넘어가세요.
-5~7개 질문이 끝나면 맞춤형 학습 계획서를 작성해 주세요.
-            </div>
-        </section>
-
-        <section id="chapter-11">
-            <h2>11. 인지 검증자 패턴 : 복잡한 문제를 더 잘 다루는 방법</h2>
-            <p>- 일반 패턴 : 복잡한 질문 입력 -> 즉각 답변(오류, 누락 발생 ↑)<br>
-            - 인증 검증자 패턴 : 복잡한 질문 입력 -> AI 가 하위 질문을 분해 -> 각 질문을 순서대로 검증 -> 검증된 답을 통합</p>
-
-            <div class="example-box">
-                <span class="example-label">EXAMPLE</span>
-복잡한 질문 : “우리 회사가 베트남에 생산 법인을 설립하면 세금, 인력, 물류 측면에서 유리한가요?”
-
-인지 검증자 패턴 : 먼저 이 질문을 풀기 위한 하위 질문을 도출하고, 각각을 검증한 뒤 통합된 판단을 내립니다.
-            </div>
-
-            <h3>#방법1 : 명시적 분해 요청</h3>
-            <p>아래 질문에 바로 답하지 말고 먼저 <br>
-            이 질문을 정확히 답하기 위해 필요한 하위 질문 목록을 만들고<br>
-            각 하위 질문에 순서대로 답한 뒤<br>
-            최종 통합 답변을 제시 하세요<br>
-            질문 : </p>
-
-            <h3>#방법2 : 전문가 검증 방식</h3>
-            <p>{전문 분야} 전문가처럼 이 문제를 다루세요.<br>
-            확신이 없는 부분은 가정으로 명시하고<br>
-            각 판단의 근거를 함께 제시하면서<br>
-            단계적으로 결론에 도달하세요</p>
-
-            <div class="example-box">
-                <span class="example-label">EXAMPLE</span>
-아래 [질문]에 바로 답하지 말고 먼저 
-이 질문을 정확히 답하기 위해 필요한 하위 질문을 3~5개 도출하세요
-각 하위 질문에 순서대로 답한 뒤
-최종 통합 답변을 제시 하세요
-
-[질문] = “python 으로 무역 데이터 자동화를 구축할때 클라우드 서버가 필요한가요”
-            </div>
-        </section>
-
-    </main>
-
-    <script>
-        // Sidebar & Hamburger Logic
-        const hamburgerBtn = document.getElementById('hamburger-btn');
-        const sidebar = document.getElementById('sidebar');
-        const overlay = document.getElementById('overlay');
-        const navLinks = document.querySelectorAll('.nav-link');
-
-        function toggleSidebar() {
-            sidebar.classList.toggle('active');
-            overlay.classList.toggle('active');
-        }
-
-        hamburgerBtn.addEventListener('click', toggleSidebar);
-        overlay.addEventListener('click', toggleSidebar);
-
-        // Close sidebar when a link is clicked (mobile)
-        navLinks.forEach(link => {
-            link.addEventListener('click', () => {
-                if (window.innerWidth <= 900) {
-                    toggleSidebar();
-                }
-            });
+    const observer = new IntersectionObserver(
+      entries => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            navLinks.forEach(a => a.classList.remove('active'));
+            const active = navList.querySelector(`a[href="#${entry.target.id}"]`);
+            if (active) active.classList.add('active');
+          }
         });
+      },
+      {
+        rootMargin: `-${getComputedStyle(document.documentElement)
+          .getPropertyValue('--header-h').trim()} 0px -70% 0px`,
+        threshold: 0
+      }
+    );
 
-        // Scroll Spy Logic
-        const sections = document.querySelectorAll('section');
-        const navItems = document.querySelectorAll('.nav-link');
+    headings.forEach(h => observer.observe(h));
 
-        const observerOptions = {
-            root: null,
-            rootMargin: '-20% 0px -60% 0px', // Trigger highlight when section is near top
-            threshold: 0
-        };
+  } catch (err) {
+    console.error('[fetch error]', err);
+    alert('비동기 호출 실패: 로컬 서버(Live Server) 환경에서 실행하십시오');
+    loading.innerHTML = '<p style="color:var(--text-muted);text-align:center">콘텐츠를 불러올 수 없습니다.</p>';
+  }
+})();
+</script>
 
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    // Remove active from all
-                    navItems.forEach(link => link.classList.remove('active'));
-                    
-                    // Add active to current
-                    const id = entry.target.getAttribute('id');
-                    const activeLink = document.querySelector(`.nav-link[href="#${id}"]`);
-                    if (activeLink) {
-                        activeLink.classList.add('active');
-                        
-                        // Auto-scroll sidebar if item is out of view
-                        activeLink.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                    }
-                }
-            });
-        }, observerOptions);
-
-        sections.forEach(section => {
-            observer.observe(section);
-        });
-    </script>
 </body>
 </html>
