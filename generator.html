@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>프롬프트 생성기</title>
+  <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" />
+  <style>
+    /* ─── CSS Variables ─────────────────────────────────────────── */
+    :root {
+      --bg:          #ffffff;
+      --surface:     #f7f7f5;
+      --surface-2:   #eeeeed;
+      --border:      #e1e1e0;
+      --accent:      #2eaadc;
+      --accent-2:    #ff5c5c;
+      --text:        #1a1a1a;
+      --text-muted:  #6b6b6b;
+      --sidebar-w:   280px;
+      --header-h:    60px;
+      --font-serif: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+      --font-sans:  'Pretendard', -apple-system, sans-serif;
+      --font-mono:  'JetBrains Mono', monospace;
+      --radius:      6px;
+      --transition:  0.2s ease;
+    }
+
+    /* ─── Reset & Base ──────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-sans);
+      font-size: 15px;
+      line-height: 1.75;
+      min-height: 100vh;
+    }
+
+    /* ─── Layout ────────────────────────────────────────────────── */
+    #app-shell {
+      display: grid;
+      grid-template-columns: var(--sidebar-w) 1fr;
+      grid-template-rows: var(--header-h) 1fr;
+      min-height: 100vh;
+    }
+
+    /* ─── Header ────────────────────────────────────────────────── */
+    #site-header {
+      grid-column: 1 / -1;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 0 32px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    #header-brand {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      cursor: pointer;
+    }
+
+    .logo-mark {
+      width: 30px;
+      height: 30px;
+      background: var(--accent);
+      clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+      flex-shrink: 0;
+    }
+
+    #site-header h1 {
+      font-family: var(--font-serif);
+      font-size: 1rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      color: var(--text);
+      margin: 0;
+    }
+
+    #site-header h1 span {
+      color: var(--accent);
+    }
+
+    .version-tag {
+      margin-left: auto;
+      font-family: var(--font-sans);
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+      padding: 2px 10px;
+      border-radius: 20px;
+    }
+
+    /* ─── Global Navigation Bar (GNB) ───────────────────────────── */
+    #gnb-menu {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 32px;
+    }
+
+    #gnb-menu a {
+      text-decoration: none;
+      font-family: var(--font-sans);
+      font-size: 0.95rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      padding: 8px 4px;
+      border-bottom: 2px solid transparent;
+      transition: color var(--transition), border-color var(--transition);
+    }
+
+    #gnb-menu a:hover {
+      color: var(--text);
+    }
+
+    #gnb-menu a.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+
+    /* ─── Main Content (Generator Specific) ─────────────────────── */
+    #main-content {
+      grid-column: 1 / -1;
+      display: flex;
+      justify-content: center;
+      height: calc(100vh - var(--header-h));
+      padding: 20px;
+      background-color: #fcfcfc;
+    }
+
+    /* ─── Generator UI ──────────────────────────────────────────── */
+    .generator-container {
+      display: flex;
+      width: 100%;
+      max-width: 1400px;
+      gap: 20px;
+    }
+
+    .panel {
+      flex: 1;
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.02);
+    }
+
+    .panel-header {
+      padding: 15px 20px;
+      border-bottom: 1px solid var(--border);
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .tag-main {
+      background: #b9e6f8cf;
+      color: #2eaadc;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: 12px;
+      font-weight: normal;
+    }
+
+    .panel-body {
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+    }
+
+    .input-label {
+      font-weight: bold;
+      margin-bottom: 15px;
+      display: block;
+    }
+
+    textarea {
+      flex: 1;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 15px;
+      font-size: 14px;
+      resize: none;
+      outline: none;
+      background: #fafafa;
+      margin-bottom: 15px;
+      font-family: inherit;
+    }
+
+    textarea:focus {
+      border-color: #9fddf5cf;
+      background: #fff;
+    }
+
+    .action-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .btn-optimize {
+      background: #64cdf7;
+      color: #fff;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: var(--transition);
+    }
+
+    .btn-copy {
+      background: transparent;
+      color: var(--accent);
+      border: 1px solid var(--accent);
+      padding: 4px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: bold;
+      transition: var(--transition);
+    }
+
+    .btn-copy:hover {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .btn-optimize:hover {
+      background: #2eaadc;
+    }
+
+    .btn-optimize:disabled {
+      background: #d1d5db;
+      cursor: not-allowed;
+    }
+
+    #outputArea {
+      white-space: pre-wrap;
+      background: #fff;
+      border: none;
+      overflow-y: auto;
+      color: #1f2937;
+      line-height: 1.6;
+      font-family: inherit;
+      flex: 1;
+    }
+
+    .placeholder-text {
+      color: #9ca3af;
+      text-align: center;
+      margin-top: 50%;
+      transform: translateY(-50%);
+    }
+  </style>
+</head>
+<body>
+
+<div id="app-shell">
+  <header id="site-header">
+    <div id="header-brand" title="맨 위로 이동">
+      <div class="logo-mark" aria-hidden="true"></div>
+      <h1>프롬프트 엔지니어링 <span>가이드</span></h1>
+    </div>
+    
+    <nav id="gnb-menu">
+      <a href="index.html">홈</a>
+      <a href="generator.html" class="active">프롬프트 생성기</a>
+    </nav>
+
+    <span class="version-tag">v1.0</span>
+  </header>
+
+  <main id="main-content">
+    <div class="generator-container">
+                <div class="panel">
+                            <div class="panel-header">
+                                <span style="color: #22c55e;">✨</span> 프롬프트 입력
+                            </div>
+                            <div class="panel-body">
+                <span class="input-label">무엇을 만들고 싶으신가요?</span>
+                <textarea id="userInput" placeholder="어떤 요청이든 자유롭게 입력하세요!&#10;&#10;예시:&#10;📋 수출입 통관 자동화 스크립트 작성해줘&#10;📊 글로벌 증시 분석 대시보드 기획해줘&#10;📦 물류 HS 코드 분류 모델 만들어줘"></textarea>
+                <div class="action-row">
+                    <button id="optimizeBtn" class="btn-optimize">최적화 실행</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="panel">
+            <div class="panel-header" style="justify-content: space-between;">
+                <div>
+                    <span style="color: #22c55e;">🔷</span> 최적화된 프롬프트
+                </div>
+                <button id="copyBtn" class="btn-copy" style="display: none;">복사</button>
+            </div>
+            <div class="panel-body">
+                <div id="outputArea" class="placeholder-text">최적화된 프롬프트가 여기에 표시됩니다.<br><span style="font-size: 12px; color: #d1d5db;">좌측에 프롬프트를 입력하고 최적화 버튼을 눌러주세요</span></div>
+            </div>
+        </div>
+    </div>
+  </main>
+</div>
+
+<script>
+  /* 헤더 로고 클릭 시 최상단 스크롤 */
+  const headerBrand = document.getElementById('header-brand');
+  if (headerBrand) {
+    headerBrand.addEventListener('click', () => {
+      window.location.href = 'index.html';
+    });
+  }
+
+    /* 프롬프트 최적화 API 연동 로직 (Python 백엔드 경유) */
+    // 주의: 아래 URL을 실제 배포된 FastAPI 서버 주소로 변경하십시오.
+    const BACKEND_API_URL = "http://127.0.0.1:8000/optimize";
+    const userInput = document.getElementById('userInput');
+    const outputArea = document.getElementById('outputArea');
+    const optimizeBtn = document.getElementById('optimizeBtn');
+    const copyBtn = document.getElementById('copyBtn');
+
+    optimizeBtn.addEventListener('click', async () => {
+        const text = userInput.value.trim();
+        if (!text) return;
+
+        optimizeBtn.disabled = true;
+        optimizeBtn.textContent = '최적화 중...';
+        copyBtn.style.display = 'none';
+        outputArea.classList.remove('placeholder-text');
+        outputArea.textContent = 'AI가 프롬프트를 최적화하고 있습니다...';
+
+        try {
+            const response = await fetch(BACKEND_API_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ text: text }) // 백엔드가 요구하는 형식
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.detail || '백엔드 서버 오류');
+            }
+
+            const data = await response.json();
+            outputArea.textContent = data.optimized_prompt; // 백엔드 반환 키 매칭
+            copyBtn.style.display = 'block';
+
+        } catch (error) {
+            outputArea.textContent = `API 호출 오류: ${error.message}\n(F12를 눌러 콘솔 네트워크 탭을 확인하십시오)`;
+        } finally {
+            optimizeBtn.disabled = false;
+            optimizeBtn.textContent = '최적화 실행';
+        }
+    });
+
+    /* 프롬프트 복사 기능 */
+    copyBtn.addEventListener('click', () => {
+        const textToCopy = outputArea.textContent;
+        if (!textToCopy || textToCopy.includes('최적화된 프롬프트가 여기에 표시됩니다.')) return;
+
+        navigator.clipboard.writeText(textToCopy).then(() => {
+            const originalText = copyBtn.textContent;
+            copyBtn.textContent = '복사 완료!';
+            copyBtn.style.background = 'var(--accent)';
+            copyBtn.style.color = '#fff';
+
+            setTimeout(() => {
+                copyBtn.textContent = originalText;
+                copyBtn.style.background = 'transparent';
+                copyBtn.style.color = 'var(--accent)';
+            }, 2000);
+        }).catch(err => {
+            console.error('클립보드 복사 실패:', err);
+            alert('복사에 실패했습니다.');
+        });
+    });
+    
+</script>
+
+</body>
+</html>

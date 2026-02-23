@@ -1,0 +1,19 @@
+# 보안 관련 (반드시 포함)
+.env
+.env.local
+
+# 파이썬 캐시 및 컴파일 파일
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# 가상 환경
+.venv/
+venv/
+env/
+
+# OS 및 기타 설정
+.DS_Store
+.vscode/
+.idea/
